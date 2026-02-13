@@ -1,6 +1,7 @@
 package api.ipa.entity;
 
 import api.ipa.entity.helpEntity.PasteFormat;
+import api.ipa.entity.helpEntity.PasteVisibility;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -28,7 +29,7 @@ public class Paste {
 
     private Boolean deleteAfterExpiration;
 
-    private Boolean visibleInFeed;
+    private PasteVisibility visibility;
 
     private Instant expirationDate;
 

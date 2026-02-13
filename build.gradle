@@ -31,6 +31,8 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql' // Prod
 
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+    implementation platform('software.amazon.awssdk:bom:2.25.10')
+    implementation 'software.amazon.awssdk:s3'
 
     implementation 'org.springframework.boot:spring-boot-starter-session-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

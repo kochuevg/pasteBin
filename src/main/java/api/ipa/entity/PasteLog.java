@@ -9,6 +9,7 @@ import java.time.Instant;
 @Entity
 @Data
 public class PasteLog {
+    //TODO make a complex id
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
