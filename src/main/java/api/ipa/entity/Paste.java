@@ -1,6 +1,7 @@
 package api.ipa.entity;
 
 import api.ipa.entity.helpEntity.PasteFormat;
+import api.ipa.entity.helpEntity.PasteVisibility;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -20,15 +21,19 @@ public class Paste {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
+
+    @Column(unique = true, nullable = false)
+    private String storageKey;
 
     private String title;
 
-    private String s3Key;
-
     private Boolean deleteAfterExpiration;
 
-    private Boolean visibleInFeed;
+    @Enumerated(EnumType.STRING)
+    private PasteVisibility visibility;
+
+    private Instant creationDate;
 
     private Instant expirationDate;
 
