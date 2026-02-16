@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+
 @Service
 @Data
 @Slf4j
@@ -20,13 +24,20 @@ public class PasteServiceImpl implements PasteService{
     @Override
     public Paste createPaste(PasteRequest newPaste, String s3Key, User creator) {
         Paste paste = new Paste();
+        Instant time = Instant.now();
+        paste.setCreationDate(time);
+        paste.setExpirationDate(time.plus(newPaste.expirationDate(), ChronoUnit.DAYS));
         paste.setPasteFormat(newPaste.format());
         paste.setVisibility(newPaste.visibility());
         paste.setUser(creator);
         paste.setDeleteAfterExpiration(newPaste.deleteAfterExpiration());
         paste.setTitle(newPaste.title());
-        paste.setS3Key(s3Key);
-        paste.setExpirationDate(newPaste.expirationDate());
+        paste.setId(s3Key);
         return pasteRepository.save(paste);
+    }
+
+    @Override
+    public Optional<Paste> findPasteByStorageKey(String key) {
+        return pasteRepository.findByStorageKey(key);
     }
 }

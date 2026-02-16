@@ -12,7 +12,7 @@ public record PasteRequest(
         Boolean deleteAfterExpiration,
         Long userId,
         String data,
-        Instant expirationDate
+        Long expirationDate
 ){
     public PasteRequest{
         if(format == null) format = PasteFormat.PLAIN_TEXT;

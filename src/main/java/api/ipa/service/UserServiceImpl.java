@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.util.Optional;
+
 @Service
 @Data
 @Slf4j
@@ -17,18 +19,23 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
 
     @Override
-    public User findUser(Long id){
-        User user = userRepository.findById(id).orElseThrow(NullPointerException::new);
-        return user;
+    public Optional<User> findUser(Long id){
+        return userRepository.findById(id);
     }
 
     @Override
-    public User updateUser(Long id, UserRequest userRequest) {
+    public User updateUserInfo(Long id, UserRequest userRequest) {
         return null;
     }
 
     @Override
     public Boolean deleteUser(Long id) {
         return null;
+    }
+
+    @Override
+    public Boolean saveUser(User user) {
+        userRepository.save(user);
+        return true;
     }
 }
