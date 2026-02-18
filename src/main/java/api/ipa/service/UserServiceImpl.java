@@ -1,7 +1,10 @@
 package api.ipa.service;
 
+import api.ipa.dto.UserPage;
 import api.ipa.dto.UserRequest;
 import api.ipa.entity.User;
+import api.ipa.entity.helpEntity.Role;
+import api.ipa.exception.UserNotFoundException;
 import api.ipa.repository.UserRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +33,43 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public Boolean deleteUser(Long id) {
-        return null;
+        userRepository.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public Boolean deleteUser(User user){
+        if(user == null){
+            return false;
+        }
+        userRepository.delete(user);
+        return true;
     }
 
     @Override
     public Boolean saveUser(User user) {
         userRepository.save(user);
         return true;
+    }
+
+    @Override
+    public UserPage getUserPage(String username, User user) {
+        User foundUser = userRepository.findByUsername(username).orElseThrow(
+                () -> new UserNotFoundException("User with username: " + username + "not found")
+        );
+
+        boolean fetchAll = false;
+        boolean isAdmin = false;
+
+        if (user != null) {
+            fetchAll = user.getId().equals(foundUser.getId());
+            isAdmin = user.getRole() == Role.ADMIN;
+        }
+
+        if(isAdmin || fetchAll){
+            return UserPage.toUserPageWithAllData(foundUser);
+        }
+        return UserPage.toUserPageWithPublicData(foundUser);
+
     }
 }

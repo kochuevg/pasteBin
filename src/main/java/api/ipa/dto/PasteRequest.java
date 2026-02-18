@@ -10,7 +10,6 @@ public record PasteRequest(
         PasteFormat format,
         PasteVisibility visibility,
         Boolean deleteAfterExpiration,
-        Long userId,
         String data,
         Long expirationDate
 ){
