@@ -29,7 +29,7 @@ public class PasteServiceImpl implements PasteService{
         paste.setExpirationDate(time.plus(newPaste.expirationDate(), ChronoUnit.DAYS));
         paste.setPasteFormat(newPaste.format());
         paste.setVisibility(newPaste.visibility());
-        paste.setUser(creator);
+        paste.setCreator(creator);
         paste.setDeleteAfterExpiration(newPaste.deleteAfterExpiration());
         paste.setTitle(newPaste.title());
         paste.setId(s3Key);
@@ -39,5 +39,10 @@ public class PasteServiceImpl implements PasteService{
     @Override
     public Optional<Paste> findPasteByStorageKey(String key) {
         return pasteRepository.findByStorageKey(key);
+    }
+
+    @Override
+    public void deletePaste(Paste paste){
+        pasteRepository.delete(paste);
     }
 }

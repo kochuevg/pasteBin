@@ -1,5 +1,6 @@
 package api.ipa.service;
 
+import api.ipa.dto.UserPage;
 import api.ipa.dto.UserRequest;
 import api.ipa.entity.User;
 
@@ -9,5 +10,7 @@ public interface UserService {
     Optional<User> findUser(Long id);
     User updateUserInfo(Long id, UserRequest userRequest);
     Boolean deleteUser(Long id);
+    Boolean deleteUser(User user);
     Boolean saveUser(User user);
+    UserPage getUserPage(String username, User user);
 }

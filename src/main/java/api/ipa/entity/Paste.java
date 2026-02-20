@@ -42,8 +42,8 @@ public class Paste {
 
     @ManyToOne
     @JsonBackReference
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "creator_id")
+    private User creator;
 
     @OneToMany(mappedBy = "paste", fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
     @JsonManagedReference

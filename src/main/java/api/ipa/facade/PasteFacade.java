@@ -4,6 +4,9 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
+import api.ipa.exception.ForbiddenOperationException;
+import api.ipa.exception.PasteNotFoundException;
+import api.ipa.exception.UserNotFoundException;
 import api.ipa.service.PasteNameGeneratorService;
 import api.ipa.service.PasteService;
 import api.ipa.service.StorageService;
@@ -35,8 +38,10 @@ public class PasteFacade {
 
     //TODO add RateLimiterService, FeedService, ApplicationEventPublisher delete as added
 
-    public String createPaste(PasteRequest request){
-        User creator = userService.findUser(request.userId()).orElseThrow(RuntimeException::new);
+    public String createPaste(PasteRequest request, User creator){
+        if(creator == null){
+            throw new ForbiddenOperationException("You must be logged in to create pastes");
+        }
         //Check for disturbing content
         //
         String uniqueName = generateUniqueName().orElseThrow(RuntimeException::new);
@@ -72,5 +77,22 @@ public class PasteFacade {
         }
 
         return  PasteResponse.from(paste, data, paste.getLogs().size());
+    }
+
+    public boolean deletePaste(String key, User user){
+        Paste paste = pasteService.findPasteByStorageKey(key).orElse(null);
+        if(paste == null){
+            return false;
+        }
+
+        if(!paste.getCreator().equals(user)){
+            throw new ForbiddenOperationException("Forbidden delete");
+        }
+
+        storageService.delete(key);
+
+        pasteService.deletePaste(paste);
+
+        return true;
     }
 }
