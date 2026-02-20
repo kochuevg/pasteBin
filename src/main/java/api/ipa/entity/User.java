@@ -43,6 +43,7 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
     @JsonManagedReference
+    @Builder.Default
     private List<Paste> pastes = new ArrayList<>();
 
     @Override

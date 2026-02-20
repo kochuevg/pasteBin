@@ -6,6 +6,7 @@ build/
 
 ### Secret ###
 *.key
+.env
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
