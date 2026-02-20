@@ -19,7 +19,7 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username).orElseThrow(RuntimeException::new);
+        return username -> userRepository.findByUsername(username).orElseThrow(RuntimeException::new);
     }
 
     @Bean

@@ -47,12 +47,17 @@ public class AuthenticationServiceImpl implements AuthenticationService{
 
         User user = User.builder()
                 .email(registerRequest.email())
+                .username(registerRequest.username())
                 .password(passwordEncoder.encode(registerRequest.password()))
                 .role(Role.USER)
                 .birthday(registerRequest.birthday())
                 .build();
 
-        userRepository.save(user);
+        log.info("Created User : {}", user);
+
+        User savedUser = userRepository.save(user);
+
+        log.info("Fetched User : {}", savedUser);
 
         String jwtToken = jwtService.generateToken(user);
 
