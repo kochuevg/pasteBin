@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PasteExpiredException.class)
     public ResponseEntity<ErrorResponse> pasteExpiredException(final PasteExpiredException ex) {
         final ErrorResponse error = new ErrorResponse(
-                ex.getMessage(),
+                "Paste with key: " + ex.getMessage() + " is already expired",
                 HttpStatus.GONE,
                 LocalDateTime.now()
         );
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PasteNotFoundException.class)
     public ResponseEntity<ErrorResponse> pasteNotFoundException(final PasteNotFoundException ex) {
         final ErrorResponse error = new ErrorResponse(
-                ex.getMessage(),
+                "Paste with key " + ex.getMessage() + " was not found",
                 HttpStatus.NOT_FOUND,
                 LocalDateTime.now()
         );

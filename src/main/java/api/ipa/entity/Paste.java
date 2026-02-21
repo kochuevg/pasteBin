@@ -21,14 +21,14 @@ public class Paste {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private String id;
+    private Long id;
 
     @Column(unique = true, nullable = false)
     private String storageKey;
 
     private String title;
 
-    private Boolean deleteAfterExpiration;
+    private Boolean deleteAfterExpiration = true;
 
     @Enumerated(EnumType.STRING)
     private PasteVisibility visibility;

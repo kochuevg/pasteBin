@@ -4,7 +4,9 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
+import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.ForbiddenOperationException;
+import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
 import api.ipa.exception.UserNotFoundException;
 import api.ipa.service.PasteNameGeneratorService;
@@ -20,6 +22,7 @@ import org.springframework.util.StreamUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -29,8 +32,6 @@ import java.util.Optional;
 public class PasteFacade {
 
     private final PasteService pasteService;
-
-    private final UserService userService;
 
     private final StorageService storageService;
 
@@ -46,12 +47,16 @@ public class PasteFacade {
         //
         String uniqueName = generateUniqueName().orElseThrow(RuntimeException::new);
 
+        log.info("Generated unique name:{} for request: {}", uniqueName, request);
+
         storageService.upload(uniqueName, request.data());
 
-        Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
+        log.info("Paste was uploaded to storage for request: {}", request);
 
-        creator.getPastes().add(createdPaste);
-        userService.saveUser(creator);
+        Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
+        pasteService.save(createdPaste);
+
+        log.info("Paste was successfully saved: {}", createdPaste);
         //Push to the cache and feed if its visible
         //update rate limit
         return uniqueName;
@@ -66,10 +71,22 @@ public class PasteFacade {
         return Optional.empty();
     }
 
-    public PasteResponse getPaste(String storageKey){
-        Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(RuntimeException::new);
+    public PasteResponse getPaste(String storageKey, User currentUser){
+        Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(
+                () -> new PasteNotFoundException(storageKey)
+        );
 
-        String data;
+        boolean isOwner = currentUser != null && currentUser.getId().equals(paste.getCreator().getId());
+
+        if(paste.getExpirationDate().isBefore(Instant.now()) && !isOwner){
+            throw new PasteExpiredException(storageKey);
+        }
+
+        if(paste.getVisibility() == PasteVisibility.PRIVATE && !isOwner){
+            throw new ForbiddenOperationException("This paste is not publicly accessible");
+        }
+
+        String data = "";
         try(InputStream is = storageService.download(storageKey)){
             data = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
         }catch(IOException e){
@@ -85,7 +102,7 @@ public class PasteFacade {
             return false;
         }
 
-        if(!paste.getCreator().equals(user)){
+        if(!paste.getCreator().getId().equals(user.getId())){
             throw new ForbiddenOperationException("Forbidden delete");
         }
 

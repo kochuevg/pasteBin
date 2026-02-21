@@ -32,7 +32,12 @@ public class PasteServiceImpl implements PasteService{
         paste.setCreator(creator);
         paste.setDeleteAfterExpiration(newPaste.deleteAfterExpiration());
         paste.setTitle(newPaste.title());
-        paste.setId(s3Key);
+        paste.setStorageKey(s3Key);
+        return paste;
+    }
+
+    @Override
+    public Paste save(Paste paste) {
         return pasteRepository.save(paste);
     }
 
