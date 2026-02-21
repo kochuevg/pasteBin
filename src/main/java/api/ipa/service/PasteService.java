@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface PasteService {
     Paste createPaste(PasteRequest newPaste, String s3Key, User creator);
+    Paste save(Paste paste);
     Optional<Paste> findPasteByStorageKey(String key);
     void deletePaste(Paste paste);
 }

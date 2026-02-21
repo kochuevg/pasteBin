@@ -4,6 +4,7 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
+import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.ForbiddenOperationException;
 import api.ipa.exception.PasteNotFoundException;
 import api.ipa.exception.UserNotFoundException;
@@ -46,12 +47,16 @@ public class PasteFacade {
         //
         String uniqueName = generateUniqueName().orElseThrow(RuntimeException::new);
 
+        log.info("Generated unique name:{} for request: {}", uniqueName, request);
+
         storageService.upload(uniqueName, request.data());
 
-        Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
+        log.info("Paste was uploaded to storage for request: {}", request);
 
-        creator.getPastes().add(createdPaste);
-        userService.saveUser(creator);
+        Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
+        pasteService.save(createdPaste);
+
+        log.info("Paste was successfully saved: {}", createdPaste);
         //Push to the cache and feed if its visible
         //update rate limit
         return uniqueName;
@@ -66,10 +71,15 @@ public class PasteFacade {
         return Optional.empty();
     }
 
-    public PasteResponse getPaste(String storageKey){
+    public PasteResponse getPaste(String storageKey, User currentUser){
         Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(RuntimeException::new);
 
-        String data;
+        if(paste.getVisibility() == PasteVisibility.PRIVATE && currentUser != null
+                && !currentUser.getId().equals(paste.getCreator().getId())){
+            throw new ForbiddenOperationException("This paste is not publicly accessible");
+        }
+
+        String data = "";
         try(InputStream is = storageService.download(storageKey)){
             data = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
         }catch(IOException e){
@@ -85,7 +95,7 @@ public class PasteFacade {
             return false;
         }
 
-        if(!paste.getCreator().equals(user)){
+        if(!paste.getCreator().getId().equals(user.getId())){
             throw new ForbiddenOperationException("Forbidden delete");
         }
 

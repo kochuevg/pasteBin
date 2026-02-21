@@ -25,8 +25,9 @@ public class PasteController {
     }
 
     @GetMapping("/{url}")
-    public ResponseEntity<?> getPaste(@PathVariable String url){
-        PasteResponse response = pasteFacade.getPaste(url);
+    public ResponseEntity<?> getPaste(@PathVariable String url,
+                                      @AuthenticationPrincipal User user){
+        PasteResponse response = pasteFacade.getPaste(url, user);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
