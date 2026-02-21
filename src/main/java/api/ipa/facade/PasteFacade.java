@@ -31,8 +31,6 @@ public class PasteFacade {
 
     private final PasteService pasteService;
 
-    private final UserService userService;
-
     private final StorageService storageService;
 
     private final PasteNameGeneratorService nameGeneratorService;
