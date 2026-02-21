@@ -6,6 +6,7 @@ import api.ipa.entity.Paste;
 import api.ipa.entity.User;
 import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.ForbiddenOperationException;
+import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
 import api.ipa.exception.UserNotFoundException;
 import api.ipa.service.PasteNameGeneratorService;
@@ -21,6 +22,7 @@ import org.springframework.util.StreamUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -70,10 +72,17 @@ public class PasteFacade {
     }
 
     public PasteResponse getPaste(String storageKey, User currentUser){
-        Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(RuntimeException::new);
+        Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(
+                () -> new PasteNotFoundException(storageKey)
+        );
 
-        if(paste.getVisibility() == PasteVisibility.PRIVATE && currentUser != null
-                && !currentUser.getId().equals(paste.getCreator().getId())){
+        boolean isOwner = currentUser != null && currentUser.getId().equals(paste.getCreator().getId());
+
+        if(paste.getExpirationDate().isBefore(Instant.now()) && !isOwner){
+            throw new PasteExpiredException(storageKey);
+        }
+
+        if(paste.getVisibility() == PasteVisibility.PRIVATE && !isOwner){
             throw new ForbiddenOperationException("This paste is not publicly accessible");
         }
 

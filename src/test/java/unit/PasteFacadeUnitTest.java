@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -69,6 +70,7 @@ class PasteFacadeUnitTest {
         dummyPaste.setVisibility(PasteVisibility.PUBLIC);
         dummyPaste.setPasteFormat(PasteFormat.PLAIN_TEXT);
         dummyPaste.setLogs(new ArrayList<>());
+        dummyPaste.setExpirationDate(Instant.MAX);
 
         dummyRequest = new PasteRequest("Hello World Data",
                 PasteFormat.PLAIN_TEXT,

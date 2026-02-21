@@ -28,7 +28,7 @@ public class Paste {
 
     private String title;
 
-    private Boolean deleteAfterExpiration;
+    private Boolean deleteAfterExpiration = true;
 
     @Enumerated(EnumType.STRING)
     private PasteVisibility visibility;
