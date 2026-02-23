@@ -40,12 +40,11 @@ public class Paste {
     @Enumerated(EnumType.STRING)
     private PasteFormat pasteFormat;
 
+    private long views = 0;
+
     @ManyToOne
     @JsonBackReference
     @JoinColumn(name = "creator_id")
     private User creator;
 
-    @OneToMany(mappedBy = "paste", fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
-    @JsonManagedReference
-    private List<PasteLog> logs = new ArrayList<>();
 }

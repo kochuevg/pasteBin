@@ -14,9 +14,9 @@ public record PasteResponse(
         Instant createdAt,
         Instant expireAt,
         PasteVisibility visibility,
-        int views
+        long views
 ) {
-    public static PasteResponse from(Paste paste, String content, int views) {
+    public static PasteResponse from(Paste paste, String content) {
         return new PasteResponse(
                 paste.getStorageKey(),
                 paste.getTitle(),
@@ -25,7 +25,7 @@ public record PasteResponse(
                 paste.getCreationDate(),
                 paste.getExpirationDate(),
                 paste.getVisibility(),
-                views
+                paste.getViews()
         );
     }
 }

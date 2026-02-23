@@ -9,10 +9,7 @@ import api.ipa.exception.ForbiddenOperationException;
 import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
 import api.ipa.exception.UserNotFoundException;
-import api.ipa.service.PasteNameGeneratorService;
-import api.ipa.service.PasteService;
-import api.ipa.service.StorageService;
-import api.ipa.service.UserService;
+import api.ipa.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +34,9 @@ public class PasteFacade {
 
     private final PasteNameGeneratorService nameGeneratorService;
 
-    //TODO add RateLimiterService, FeedService, ApplicationEventPublisher delete as added
+    private final RedisService redisService;
+
+    //TODO add RateLimiterService, ApplicationEventPublisher delete as added
 
     public String createPaste(PasteRequest request, User creator){
         if(creator == null){
@@ -71,7 +70,7 @@ public class PasteFacade {
         return Optional.empty();
     }
 
-    public PasteResponse getPaste(String storageKey, User currentUser){
+    public PasteResponse getPaste(String storageKey, User currentUser, String userIp, String userAgent){
         Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(
                 () -> new PasteNotFoundException(storageKey)
         );
@@ -86,6 +85,8 @@ public class PasteFacade {
             throw new ForbiddenOperationException("This paste is not publicly accessible");
         }
 
+        redisService.recordUniqueView(storageKey, userIp, userAgent);
+
         String data = "";
         try(InputStream is = storageService.download(storageKey)){
             data = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
@@ -93,7 +94,7 @@ public class PasteFacade {
             throw new RuntimeException();
         }
 
-        return  PasteResponse.from(paste, data, paste.getLogs().size());
+        return  PasteResponse.from(paste, data);
     }
 
     public boolean deletePaste(String key, User user){
