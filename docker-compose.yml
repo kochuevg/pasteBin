@@ -54,12 +54,13 @@ services:
       mc anonymous set public myminio/my-pastebin-bucket || true;
       "
 
-    redis:
-      image: redis:latest
-      container_name: pastebin-redis
-      ports:
-        - "6379:6379"
-      restart: unless-stopped
+  redis:
+    image: redis:latest
+    container_name: pastebin-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    command: redis-server --maxmemory 100mb --maxmemory-policy allkeys-lfu
 
 volumes:
   postgres_data:

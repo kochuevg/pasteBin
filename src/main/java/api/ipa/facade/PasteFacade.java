@@ -55,9 +55,7 @@ public class PasteFacade {
         Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
         pasteService.save(createdPaste);
 
-        log.info("Paste was successfully saved: {}", createdPaste);
-        //Push to the cache and feed if its visible
-        //update rate limit
+        log.info("Paste was successfully saved: {}", createdPaste.getStorageKey());
         return uniqueName;
     }
 
@@ -71,6 +69,15 @@ public class PasteFacade {
     }
 
     public PasteResponse getPaste(String storageKey, User currentUser, String userIp, String userAgent){
+        PasteResponse cached = redisService.getPasteFromCache(storageKey);
+        if(cached != null){
+            log.info("Paste was found in cache REDIS: {}", cached.key());
+            boolean cachedOwner = currentUser != null && currentUser.getUsername().equals(cached.ownerUsername());
+            if(cached.expireAt().isBefore(Instant.now()) && cachedOwner){
+                throw new PasteExpiredException(storageKey);
+            }
+        }
+
         Paste paste = pasteService.findPasteByStorageKey(storageKey).orElseThrow(
                 () -> new PasteNotFoundException(storageKey)
         );
@@ -85,7 +92,7 @@ public class PasteFacade {
             throw new ForbiddenOperationException("This paste is not publicly accessible");
         }
 
-        redisService.recordUniqueView(storageKey, userIp, userAgent);
+        log.info("Paste was found in database: {}", paste.getStorageKey());
 
         String data = "";
         try(InputStream is = storageService.download(storageKey)){
@@ -94,7 +101,16 @@ public class PasteFacade {
             throw new RuntimeException();
         }
 
-        return  PasteResponse.from(paste, data);
+        redisService.recordUniqueView(storageKey, userIp, userAgent);
+
+        PasteResponse response = PasteResponse.from(paste, data, paste.getCreator().getUsername());
+
+        if(paste.getVisibility() != PasteVisibility.PRIVATE){
+            log.info("Paste was uploaded in cache REDIS: {}", paste.getStorageKey());
+            redisService.savePasteToCache(response);
+        }
+
+        return response;
     }
 
     public boolean deletePaste(String key, User user){

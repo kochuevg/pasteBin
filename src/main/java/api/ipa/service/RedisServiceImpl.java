@@ -1,6 +1,7 @@
 package api.ipa.service;
 
 import api.ipa.dto.PastePreview;
+import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.PasteNotFoundException;
@@ -14,6 +15,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,13 +30,14 @@ public class RedisServiceImpl implements RedisService {
 
     private static final String FEED_CACHE_KEY = "feed:public:latest";
     private static final String VIEW_KEY_PREFIX = "views:unique:paste:";
+    private static final String PASTE_CACHE_KEY = "paste:details:";
 
     @Override
     @SuppressWarnings("unchecked")
     public List<PastePreview> getPublicFeed() {
         List<PastePreview> cachedFeed = (List<PastePreview>) redisTemplate.opsForValue().get(FEED_CACHE_KEY);
-
-        if(cachedFeed == null){
+        log.debug("Found cachedFeed size is: {}", cachedFeed == null ? 0 : cachedFeed.size());
+        if(cachedFeed == null || cachedFeed.isEmpty()){
             renewFeedCache();
             cachedFeed = (List<PastePreview>) redisTemplate.opsForValue().get(FEED_CACHE_KEY);
         }
@@ -48,7 +52,22 @@ public class RedisServiceImpl implements RedisService {
         redisTemplate.opsForHyperLogLog().add(VIEW_KEY_PREFIX + storageKey, hashedFingerprint);
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Override
+    public PasteResponse getPasteFromCache(String storageKey) {
+        return (PasteResponse) redisTemplate.opsForValue().get(PASTE_CACHE_KEY + storageKey);
+    }
+
+    @Override
+    public void savePasteToCache(PasteResponse paste) {
+        if (paste.expireAt() != null) {
+            Duration timeUntilExpiration = Duration.between(Instant.now(), paste.expireAt());
+            redisTemplate.opsForValue().set(PASTE_CACHE_KEY + paste.key(), paste, timeUntilExpiration);
+        } else {
+            redisTemplate.opsForValue().set(PASTE_CACHE_KEY + paste.key(), paste);
+        }
+    }
+
+    @Scheduled(fixedRate = 30000)
     @Transactional
     public void synchronizeCacheAndDatabase() {
         log.info("Starting Redis-to-PostgreSQL background synchronization...");
@@ -86,6 +105,9 @@ public class RedisServiceImpl implements RedisService {
 
             if (uniqueViews != null && uniqueViews > 0) {
                 pasteRepository.addViewsToPaste(storageKey, uniqueViews);
+
+                patchCachedPasteViews(storageKey, uniqueViews);
+
                 updatedCount++;
             }
 
@@ -93,5 +115,23 @@ public class RedisServiceImpl implements RedisService {
         }
 
         log.debug("Flushed new unique views to PostgreSQL for {} pastes.", updatedCount);
+    }
+
+    private void patchCachedPasteViews(String storageKey, long addedViews) {
+        String cacheKey = PASTE_CACHE_KEY + storageKey;
+
+        PasteResponse cachedPaste = (PasteResponse) redisTemplate.opsForValue().get(cacheKey);
+
+        if (cachedPaste != null) {
+            PasteResponse updatedPaste = cachedPaste.withAddedViews(addedViews);
+
+            Long timeToLiveSeconds = redisTemplate.getExpire(cacheKey);
+
+            if (timeToLiveSeconds != null && timeToLiveSeconds > 0) {
+                redisTemplate.opsForValue().set(cacheKey, updatedPaste, Duration.ofSeconds(timeToLiveSeconds));
+            } else {
+                redisTemplate.opsForValue().set(cacheKey, updatedPaste);
+            }
+        }
     }
 }
