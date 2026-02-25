@@ -18,7 +18,7 @@ public record UserPage(
         return user.getPastes().stream()
                 .collect(
                         Collectors.teeing(
-                                Collectors.summingLong(paste ->paste.getLogs().size()),
+                                Collectors.summingLong(Paste::getViews),
 
                                 Collectors.mapping(PastePreview::toPastePreview, Collectors.toList()),
 
@@ -38,7 +38,7 @@ public record UserPage(
                 .filter(paste -> paste.getVisibility() == PasteVisibility.PUBLIC)
                 .collect(
                         Collectors.teeing(
-                                Collectors.summingLong(paste ->paste.getLogs().size()),
+                                Collectors.summingLong(Paste::getViews),
 
                                 Collectors.mapping(PastePreview::toPastePreview, Collectors.toList()),
 

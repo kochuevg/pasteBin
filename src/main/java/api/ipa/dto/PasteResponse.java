@@ -14,9 +14,10 @@ public record PasteResponse(
         Instant createdAt,
         Instant expireAt,
         PasteVisibility visibility,
-        int views
+        long views,
+        String ownerUsername
 ) {
-    public static PasteResponse from(Paste paste, String content, int views) {
+    public static PasteResponse from(Paste paste, String content, String ownerUsername) {
         return new PasteResponse(
                 paste.getStorageKey(),
                 paste.getTitle(),
@@ -25,7 +26,22 @@ public record PasteResponse(
                 paste.getCreationDate(),
                 paste.getExpirationDate(),
                 paste.getVisibility(),
-                views
+                paste.getViews(),
+                ownerUsername
+        );
+    }
+
+    public PasteResponse withAddedViews(Long newViews){
+        return new PasteResponse(
+                this.key(),
+                this.title(),
+                this.data,
+                this.format(),
+                this.createdAt,
+                this.expireAt,
+                this.visibility,
+                this.views() + newViews,
+                this.ownerUsername
         );
     }
 }

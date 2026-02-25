@@ -10,6 +10,7 @@ import api.ipa.exception.ForbiddenOperationException;
 import api.ipa.facade.PasteFacade;
 import api.ipa.service.PasteNameGeneratorService;
 import api.ipa.service.PasteService;
+import api.ipa.service.RedisServiceImpl;
 import api.ipa.service.StorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class PasteFacadeUnitTest {
     @Mock
     private PasteNameGeneratorService nameGeneratorService;
 
+    @Mock
+    private RedisServiceImpl redisService;
+
     @InjectMocks
     private PasteFacade pasteFacade;
 
@@ -69,7 +73,6 @@ class PasteFacadeUnitTest {
         dummyPaste.setCreator(owner);
         dummyPaste.setVisibility(PasteVisibility.PUBLIC);
         dummyPaste.setPasteFormat(PasteFormat.PLAIN_TEXT);
-        dummyPaste.setLogs(new ArrayList<>());
         dummyPaste.setExpirationDate(Instant.MAX);
 
         dummyRequest = new PasteRequest("Hello World Data",
@@ -122,7 +125,7 @@ class PasteFacadeUnitTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> {
-            pasteFacade.getPaste("missing-key", owner);
+            pasteFacade.getPaste("missing-key", owner, "", "");
         });
     }
 
@@ -133,7 +136,7 @@ class PasteFacadeUnitTest {
                 .thenReturn(Optional.of(dummyPaste));
 
         assertThrows(ForbiddenOperationException.class, () -> {
-            pasteFacade.getPaste("private-key", hacker);
+            pasteFacade.getPaste("private-key", hacker, "" , "");
         });
     }
 
@@ -151,7 +154,7 @@ class PasteFacadeUnitTest {
                 .thenReturn(poisonedStream);
 
         assertThrows(RuntimeException.class, () -> {
-            pasteFacade.getPaste("valid-key", owner);
+            pasteFacade.getPaste("valid-key", owner, "" , "");
         });
     }
 
@@ -163,7 +166,7 @@ class PasteFacadeUnitTest {
         InputStream fakeStream = new ByteArrayInputStream("File Content".getBytes(StandardCharsets.UTF_8));
         Mockito.when(storageService.download("valid-key")).thenReturn(fakeStream);
 
-        PasteResponse response = pasteFacade.getPaste("valid-key", owner);
+        PasteResponse response = pasteFacade.getPaste("valid-key", owner, "", "");
 
         assertNotNull(response);
         assertEquals("File Content", response.data());

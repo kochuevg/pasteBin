@@ -21,7 +21,7 @@ public record PastePreview(
                 paste.getExpirationDate(),
                 paste.getVisibility(),
                 paste.getPasteFormat(),
-                paste.getLogs().size()
+                paste.getViews()
         );
     }
 }
