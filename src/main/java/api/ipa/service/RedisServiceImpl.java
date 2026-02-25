@@ -4,7 +4,6 @@ import api.ipa.dto.PastePreview;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.helpEntity.PasteVisibility;
-import api.ipa.exception.PasteNotFoundException;
 import api.ipa.repository.PasteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +46,9 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void recordUniqueView(String storageKey, String ip, String agent) {
         String rawFingerprint = ip + "|" + agent;
+        log.info("Raw fingerprint for storage key: {}, is: {}", storageKey, rawFingerprint);
         String hashedFingerprint = DigestUtils.md5DigestAsHex(rawFingerprint.getBytes());
-
+        log.info("Raw fingerprint for storage key AFTER hash: {}, is: {}", storageKey, hashedFingerprint);
         redisTemplate.opsForHyperLogLog().add(VIEW_KEY_PREFIX + storageKey, hashedFingerprint);
     }
 
@@ -67,7 +67,7 @@ public class RedisServiceImpl implements RedisService {
         }
     }
 
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 300000)
     @Transactional
     public void synchronizeCacheAndDatabase() {
         log.info("Starting Redis-to-PostgreSQL background synchronization...");
