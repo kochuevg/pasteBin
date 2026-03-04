@@ -46,7 +46,7 @@ To prevent concurrency bugs when patching stale cache data (e.g., updating view 
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/YourUsername/your-repo-name.git](https://github.com/YourUsername/your-repo-name.git)
+git clone [https://github.com/kochuevg/pasteBin.git]
 cd your-repo-name
 ```
 ### 2. Configure Environment Variables
