@@ -10,9 +10,11 @@ import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
 import api.ipa.exception.UserNotFoundException;
 import api.ipa.service.*;
+import api.ipa.service.moderation.helpEntity.PasteCheckEvent;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
@@ -36,14 +38,14 @@ public class PasteFacade {
 
     private final RedisService redisService;
 
-    //TODO add RateLimiterService, ApplicationEventPublisher delete as added
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    //TODO add RateLimiterService, delete as added
 
     public String createPaste(PasteRequest request, User creator){
         if(creator == null){
             throw new ForbiddenOperationException("You must be logged in to create pastes");
         }
-        //Check for disturbing content
-        //
         String uniqueName = generateUniqueName().orElseThrow(RuntimeException::new);
 
         log.info("Generated unique name:{} for request: {}", uniqueName, request);
@@ -54,6 +56,8 @@ public class PasteFacade {
 
         Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
         pasteService.save(createdPaste);
+
+        applicationEventPublisher.publishEvent(new PasteCheckEvent(uniqueName));
 
         log.info("Paste was successfully saved: {}", createdPaste.getStorageKey());
         return uniqueName;

@@ -1,6 +1,7 @@
 package api.ipa.entity;
 
 import api.ipa.entity.helpEntity.PasteFormat;
+import api.ipa.entity.helpEntity.PasteStatus;
 import api.ipa.entity.helpEntity.PasteVisibility;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -41,6 +42,9 @@ public class Paste {
     private PasteFormat pasteFormat;
 
     private long views = 0;
+
+    @Enumerated(EnumType.STRING)
+    private PasteStatus status = PasteStatus.PENDING;
 
     @ManyToOne
     @JsonBackReference
