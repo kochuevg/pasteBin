@@ -4,11 +4,11 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
+import api.ipa.entity.helpEntity.PasteStatus;
 import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.ForbiddenOperationException;
 import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
-import api.ipa.exception.UserNotFoundException;
 import api.ipa.service.*;
 import api.ipa.service.moderation.helpEntity.PasteCheckEvent;
 import lombok.Data;
@@ -54,10 +54,15 @@ public class PasteFacade {
 
         log.info("Paste was uploaded to storage for request: {}", request);
 
-        Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
-        pasteService.save(createdPaste);
+        Paste createdPaste = request.toPaste(uniqueName, creator);
 
-        applicationEventPublisher.publishEvent(new PasteCheckEvent(uniqueName));
+        if(createdPaste.getVisibility() != PasteVisibility.PRIVATE){
+            applicationEventPublisher.publishEvent(new PasteCheckEvent(uniqueName));
+        }else{
+            createdPaste.setStatus(PasteStatus.ACTIVE);
+        }
+
+        pasteService.save(createdPaste);
 
         log.info("Paste was successfully saved: {}", createdPaste.getStorageKey());
         return uniqueName;
@@ -92,7 +97,7 @@ public class PasteFacade {
             throw new PasteExpiredException(storageKey);
         }
 
-        if(paste.getVisibility() == PasteVisibility.PRIVATE && !isOwner){
+        if((paste.getVisibility() == PasteVisibility.PRIVATE || paste.getStatus() == PasteStatus.PENDING) && !isOwner ){
             throw new ForbiddenOperationException("This paste is not publicly accessible");
         }
 
@@ -109,7 +114,7 @@ public class PasteFacade {
 
         PasteResponse response = PasteResponse.from(paste, data, paste.getCreator().getUsername());
 
-        if(paste.getVisibility() != PasteVisibility.PRIVATE){
+        if(paste.getVisibility() != PasteVisibility.PRIVATE && paste.getStatus() == PasteStatus.ACTIVE){
             log.info("Paste was uploaded in cache REDIS: {}", paste.getStorageKey());
             redisService.savePasteToCache(response);
         }

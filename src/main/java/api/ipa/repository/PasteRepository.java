@@ -32,4 +32,10 @@ public interface PasteRepository extends JpaRepository<Paste, Long> {
        WHERE p.id = :pasteId\s
 """)
     void updatePasteStatus(Long pasteId, PasteStatus newStatus);
+
+    @Query(value = """
+        select p from Paste p\s
+        where (p.expirationDate <= :now and p.deleteAfterExpiration) or p.status = 'REJECTED'
+""")
+    List<Paste> findAllForDeletion(Instant now);
 }
