@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
@@ -26,10 +28,11 @@ public class ModerationContentWorker {
     private final ModerationStrategyResolver strategyResolver;
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional
     public void handleCreatedPaste(PasteCheckEvent event){
         try {
+            log.info("Checking paste WITH KEY {} !!!!", event.storageKey());
             Paste paste = pasteRepository.findByStorageKey(event.storageKey()).orElseThrow();
             int trustScore = 100;
 

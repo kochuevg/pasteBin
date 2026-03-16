@@ -11,6 +11,7 @@ import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
 import api.ipa.service.*;
 import api.ipa.service.moderation.helpEntity.PasteCheckEvent;
+import jakarta.transaction.Transactional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class PasteFacade {
 
     //TODO add RateLimiterService, delete as added
 
+    @Transactional
     public String createPaste(PasteRequest request, User creator){
         if(creator == null){
             throw new ForbiddenOperationException("You must be logged in to create pastes");
@@ -114,7 +116,7 @@ public class PasteFacade {
 
         PasteResponse response = PasteResponse.from(paste, data, paste.getCreator().getUsername());
 
-        if(paste.getVisibility() != PasteVisibility.PRIVATE && paste.getStatus() == PasteStatus.ACTIVE){
+        if(paste.getVisibility() != PasteVisibility.PRIVATE && paste.getStatus() == PasteStatus.ACTIVE && !isOwner){
             log.info("Paste was uploaded in cache REDIS: {}", paste.getStorageKey());
             redisService.savePasteToCache(response);
         }
