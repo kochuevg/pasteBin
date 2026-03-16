@@ -4,8 +4,7 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
-import api.ipa.entity.helpEntity.PasteFormat;
-import api.ipa.entity.helpEntity.PasteVisibility;
+import api.ipa.entity.helpEntity.*;
 import api.ipa.exception.ForbiddenOperationException;
 import api.ipa.facade.PasteFacade;
 import api.ipa.service.PasteNameGeneratorService;
@@ -74,13 +73,14 @@ class PasteFacadeUnitTest {
         dummyPaste.setVisibility(PasteVisibility.PUBLIC);
         dummyPaste.setPasteFormat(PasteFormat.PLAIN_TEXT);
         dummyPaste.setExpirationDate(Instant.MAX);
+        dummyPaste.setStatus(PasteStatus.ACTIVE);
 
         dummyRequest = new PasteRequest("Hello World Data",
                 PasteFormat.PLAIN_TEXT,
                 PasteVisibility.PUBLIC,
                 true,
                 "SOME CONTENT",
-                1L);
+                new ExpirationFormat(1, ExpirationUnit.DAYS));
 
         owner.getPastes().add(dummyPaste);
     }
@@ -108,9 +108,6 @@ class PasteFacadeUnitTest {
         Mockito.when(nameGeneratorService.generateName()).thenReturn("new-unique-key");
         Mockito.when(pasteService.findPasteByStorageKey("new-unique-key"))
                 .thenReturn(Optional.empty());
-
-        Mockito.when(pasteService.createPaste(eq(dummyRequest), eq("new-unique-key"), eq(owner)))
-                .thenReturn(dummyPaste);
 
         String resultName = pasteFacade.createPaste(dummyRequest, owner);
 

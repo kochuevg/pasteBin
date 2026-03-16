@@ -24,10 +24,10 @@ public class PasteCleanUpServiceImpl implements PasteCleanUpService {
     public void cleanExpiredPastes() {
         log.info("Starting scheduled cleanup of expired pastes...");
 
-        List<Paste> expiredPastes = pasteRepository.findAllByExpirationDateBeforeAndDeleteAfterExpirationTrue(Instant.now());
+        List<Paste> expiredPastes = pasteRepository.findAllForDeletion(Instant.now());
 
         if (expiredPastes.isEmpty()) {
-            log.info("No expired pastes found. Cleanup complete.");
+            log.info("No expired or rejected pastes found. Cleanup complete.");
             return;
         }
 
@@ -43,6 +43,6 @@ public class PasteCleanUpServiceImpl implements PasteCleanUpService {
             }
         }
 
-        log.info("Cleanup complete. Successfully deleted {} expired pastes.", deletedCount);
+        log.info("Cleanup complete. Successfully deleted {} expired and rejected pastes.", deletedCount);
     }
 }

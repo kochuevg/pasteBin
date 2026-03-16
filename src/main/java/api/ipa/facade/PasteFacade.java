@@ -4,15 +4,18 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
+import api.ipa.entity.helpEntity.PasteStatus;
 import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.ForbiddenOperationException;
 import api.ipa.exception.PasteExpiredException;
 import api.ipa.exception.PasteNotFoundException;
-import api.ipa.exception.UserNotFoundException;
 import api.ipa.service.*;
+import api.ipa.service.moderation.helpEntity.PasteCheckEvent;
+import jakarta.transaction.Transactional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
@@ -36,14 +39,15 @@ public class PasteFacade {
 
     private final RedisService redisService;
 
-    //TODO add RateLimiterService, ApplicationEventPublisher delete as added
+    private final ApplicationEventPublisher applicationEventPublisher;
 
+    //TODO add RateLimiterService, delete as added
+
+    @Transactional
     public String createPaste(PasteRequest request, User creator){
         if(creator == null){
             throw new ForbiddenOperationException("You must be logged in to create pastes");
         }
-        //Check for disturbing content
-        //
         String uniqueName = generateUniqueName().orElseThrow(RuntimeException::new);
 
         log.info("Generated unique name:{} for request: {}", uniqueName, request);
@@ -52,7 +56,14 @@ public class PasteFacade {
 
         log.info("Paste was uploaded to storage for request: {}", request);
 
-        Paste createdPaste = pasteService.createPaste(request, uniqueName, creator);
+        Paste createdPaste = request.toPaste(uniqueName, creator);
+
+        if(createdPaste.getVisibility() != PasteVisibility.PRIVATE){
+            applicationEventPublisher.publishEvent(new PasteCheckEvent(uniqueName));
+        }else{
+            createdPaste.setStatus(PasteStatus.ACTIVE);
+        }
+
         pasteService.save(createdPaste);
 
         log.info("Paste was successfully saved: {}", createdPaste.getStorageKey());
@@ -88,7 +99,7 @@ public class PasteFacade {
             throw new PasteExpiredException(storageKey);
         }
 
-        if(paste.getVisibility() == PasteVisibility.PRIVATE && !isOwner){
+        if((paste.getVisibility() == PasteVisibility.PRIVATE || paste.getStatus() == PasteStatus.PENDING) && !isOwner ){
             throw new ForbiddenOperationException("This paste is not publicly accessible");
         }
 
@@ -105,7 +116,7 @@ public class PasteFacade {
 
         PasteResponse response = PasteResponse.from(paste, data, paste.getCreator().getUsername());
 
-        if(paste.getVisibility() != PasteVisibility.PRIVATE){
+        if(paste.getVisibility() != PasteVisibility.PRIVATE && paste.getStatus() == PasteStatus.ACTIVE && !isOwner){
             log.info("Paste was uploaded in cache REDIS: {}", paste.getStorageKey());
             redisService.savePasteToCache(response);
         }

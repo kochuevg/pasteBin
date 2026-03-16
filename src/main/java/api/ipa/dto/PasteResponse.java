@@ -2,6 +2,7 @@ package api.ipa.dto;
 
 
 import api.ipa.entity.Paste;
+import api.ipa.entity.helpEntity.PasteStatus;
 import api.ipa.entity.helpEntity.PasteVisibility;
 
 import java.time.Instant;
@@ -15,7 +16,8 @@ public record PasteResponse(
         Instant expireAt,
         PasteVisibility visibility,
         long views,
-        String ownerUsername
+        String ownerUsername,
+        PasteStatus status
 ) {
     public static PasteResponse from(Paste paste, String content, String ownerUsername) {
         return new PasteResponse(
@@ -27,7 +29,8 @@ public record PasteResponse(
                 paste.getExpirationDate(),
                 paste.getVisibility(),
                 paste.getViews(),
-                ownerUsername
+                ownerUsername,
+                paste.getStatus()
         );
     }
 
@@ -41,7 +44,8 @@ public record PasteResponse(
                 this.expireAt,
                 this.visibility,
                 this.views() + newViews,
-                this.ownerUsername
+                this.ownerUsername,
+                this.status
         );
     }
 }

@@ -22,21 +22,6 @@ public class PasteServiceImpl implements PasteService{
     private final PasteRepository pasteRepository;
 
     @Override
-    public Paste createPaste(PasteRequest newPaste, String s3Key, User creator) {
-        Paste paste = new Paste();
-        Instant time = Instant.now();
-        paste.setCreationDate(time);
-        paste.setExpirationDate(time.plus(newPaste.expirationDate(), ChronoUnit.DAYS));
-        paste.setPasteFormat(newPaste.format());
-        paste.setVisibility(newPaste.visibility());
-        paste.setCreator(creator);
-        paste.setDeleteAfterExpiration(newPaste.deleteAfterExpiration());
-        paste.setTitle(newPaste.title());
-        paste.setStorageKey(s3Key);
-        return paste;
-    }
-
-    @Override
     public Paste save(Paste paste) {
         return pasteRepository.save(paste);
     }

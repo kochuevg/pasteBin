@@ -2,6 +2,7 @@ package api.ipa.dto;
 
 import api.ipa.entity.Paste;
 import api.ipa.entity.helpEntity.PasteFormat;
+import api.ipa.entity.helpEntity.PasteStatus;
 import api.ipa.entity.helpEntity.PasteVisibility;
 
 import java.time.Instant;
@@ -12,7 +13,8 @@ public record PastePreview(
         Instant expirationDate,
         PasteVisibility pasteVisibility,
         PasteFormat pasteFormat,
-        long views
+        long views,
+        PasteStatus status
 ) {
     public static PastePreview toPastePreview(Paste paste) {
         return new PastePreview(
@@ -21,7 +23,8 @@ public record PastePreview(
                 paste.getExpirationDate(),
                 paste.getVisibility(),
                 paste.getPasteFormat(),
-                paste.getViews()
+                paste.getViews(),
+                paste.getStatus()
         );
     }
 }
