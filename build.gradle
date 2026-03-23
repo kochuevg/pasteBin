@@ -30,6 +30,8 @@ dependencies {
     runtimeOnly 'com.h2database:h2'       // Dev
     runtimeOnly 'org.postgresql:postgresql' // Prod
 
+    implementation 'com.bucket4j:bucket4j_jdk17-core:8.17.0'
+
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
     implementation platform('software.amazon.awssdk:bom:2.25.10')
     implementation 'software.amazon.awssdk:s3'

@@ -4,6 +4,7 @@ import api.ipa.entity.Paste;
 import api.ipa.entity.User;
 import api.ipa.entity.helpEntity.PasteVisibility;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ public record UserPage(
         long totalViews,
         String bio,
         String avatarURL,
+        Instant joined,
         List<PastePreview> pastes
 ) {
     public static UserPage toUserPageWithAllData(User user, String fullAvatarPath) {
@@ -31,6 +33,7 @@ public record UserPage(
                                                 totalPageViews,
                                                 user.getBio(),
                                                 fullAvatarPath,
+                                                user.getCreatedAt(),
                                                 previews
                                         )
                         )
@@ -53,6 +56,7 @@ public record UserPage(
                                                 totalPageViews,
                                                 user.getBio(),
                                                 fullAvatarPath,
+                                                user.getCreatedAt(),
                                                 previews
                                         )
                         )

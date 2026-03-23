@@ -10,4 +10,5 @@ public interface PasteService {
     Paste save(Paste paste);
     Optional<Paste> findPasteByStorageKey(String key);
     void deletePaste(Paste paste);
+    int findNonExpiringForUser(Long userId);
 }

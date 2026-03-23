@@ -4,6 +4,7 @@ import api.ipa.dto.PasteRequest;
 import api.ipa.dto.PasteResponse;
 import api.ipa.entity.Paste;
 import api.ipa.entity.User;
+import api.ipa.entity.helpEntity.ExpirationUnit;
 import api.ipa.entity.helpEntity.PasteStatus;
 import api.ipa.entity.helpEntity.PasteVisibility;
 import api.ipa.exception.ForbiddenOperationException;
@@ -15,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
@@ -41,12 +43,22 @@ public class PasteFacade {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    //TODO add RateLimiterService, delete as added
+    @Value("${app.limits.pastes.max-non-expiring}")
+    private int maxNonExpiringPastes;
 
     @Transactional
     public String createPaste(PasteRequest request, User creator){
         if(creator == null){
             throw new ForbiddenOperationException("You must be logged in to create pastes");
+        }
+
+        int nonExpiringCount = pasteService.findNonExpiringForUser(creator.getId());
+
+        if(request.expirationDate().timeUnit() == ExpirationUnit.NEVER && nonExpiringCount >= 20){
+            throw new IllegalArgumentException(
+                    "You have reached your limit of " + maxNonExpiringPastes +
+                            " non-expiring pastes. Please delete some or set an expiration date."
+            );
         }
         String uniqueName = generateUniqueName().orElseThrow(RuntimeException::new);
 
