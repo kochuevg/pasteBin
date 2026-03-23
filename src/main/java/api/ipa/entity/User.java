@@ -11,6 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,9 +37,11 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
 
-    private LocalDateTime birthday;
+    private Instant birthday;
 
-    private String avatarUrl;
+    @Column(length = 500)
+    private String bio;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -46,6 +49,11 @@ public class User implements UserDetails {
     @JsonManagedReference
     @Builder.Default
     private List<Paste> pastes = new ArrayList<>();
+
+    @Column(name = "avatar_key")
+    private String avatarKey;
+
+    private Instant createdAt = Instant.now();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

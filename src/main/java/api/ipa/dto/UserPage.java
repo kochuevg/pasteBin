@@ -12,9 +12,11 @@ public record UserPage(
         String username,
         String email,
         long totalViews,
+        String bio,
+        String avatarURL,
         List<PastePreview> pastes
 ) {
-    public static UserPage toUserPageWithAllData(User user) {
+    public static UserPage toUserPageWithAllData(User user, String fullAvatarPath) {
         return user.getPastes().stream()
                 .collect(
                         Collectors.teeing(
@@ -27,13 +29,15 @@ public record UserPage(
                                                 user.getUsername(),
                                                 user.getEmail(),
                                                 totalPageViews,
+                                                user.getBio(),
+                                                fullAvatarPath,
                                                 previews
                                         )
                         )
                 );
     }
 
-    public static UserPage toUserPageWithPublicData(User user) {
+    public static UserPage toUserPageWithPublicData(User user, String fullAvatarPath) {
         return user.getPastes().stream()
                 .filter(paste -> paste.getVisibility() == PasteVisibility.PUBLIC)
                 .collect(
@@ -47,6 +51,8 @@ public record UserPage(
                                                 user.getUsername(),
                                                 "",
                                                 totalPageViews,
+                                                user.getBio(),
+                                                fullAvatarPath,
                                                 previews
                                         )
                         )

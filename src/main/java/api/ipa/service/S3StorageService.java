@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -39,6 +40,25 @@ public class S3StorageService implements StorageService {
         } catch (S3Exception e) {
             log.error("S3 Upload Error", e);
             throw new RuntimeException("Failed to upload to storage", e);
+        }
+    }
+
+    public String upload(String key, MultipartFile file) {
+        log.info("Uploading file to S3: {}", key);
+
+        try {
+            PutObjectRequest putOb = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .build();
+
+            s3Client.putObject(putOb, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+            return key;
+        } catch (Exception e) {
+            log.error("S3 File Upload Error", e);
+            throw new RuntimeException("Failed to upload file to storage", e);
         }
     }
 
